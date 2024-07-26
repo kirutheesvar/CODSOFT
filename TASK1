@@ -1,0 +1,64 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.impute import SimpleImputer
+from sklearn.compose import ColumnTransformer
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+
+# Code to run in Google Colab to define and upload the dataset
+from google.colab import files
+
+# Uncomment the next two lines to upload the file in Google Colab
+uploaded = files.upload()
+file_path = list(uploaded.keys())[0]
+
+# Load the Titanic dataset
+titanic_data = pd.read_csv(file_path)
+
+# Drop the 'Cabin' column and rows with missing 'Embarked'
+titanic_data = titanic_data.drop(columns=['Cabin'])
+titanic_data = titanic_data.dropna(subset=['Embarked'])
+
+# Define the features and target variable
+X = titanic_data.drop(columns=['PassengerId', 'Name', 'Ticket', 'Survived'])
+y = titanic_data['Survived']
+
+# Define preprocessing for numeric and categorical features
+numeric_features = ['Age', 'SibSp', 'Parch', 'Fare']
+numeric_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='median')),
+    ('scaler', StandardScaler())])
+
+categorical_features = ['Pclass', 'Sex', 'Embarked']
+categorical_transformer = Pipeline(steps=[
+    ('imputer', SimpleImputer(strategy='most_frequent')),
+    ('onehot', OneHotEncoder(handle_unknown='ignore'))])
+
+# Combine preprocessing steps
+preprocessor = ColumnTransformer(
+    transformers=[
+        ('num', numeric_transformer, numeric_features),
+        ('cat', categorical_transformer, categorical_features)])
+
+# Define the model pipeline
+model = Pipeline(steps=[('preprocessor', preprocessor),
+                        ('classifier', RandomForestClassifier(random_state=42))])
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+print(f'Accuracy: {accuracy:.4f}')
+print('Classification Report:')
+print(report)
