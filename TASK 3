@@ -1,0 +1,47 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.pipeline import Pipeline
+from google.colab import files
+
+# Upload the file in Google Colab
+uploaded = files.upload()
+
+# Load the Iris dataset
+file_path = list(uploaded.keys())[0]
+iris_data = pd.read_csv(file_path)
+
+# Display the first few rows of the dataset to understand its structure
+print(iris_data.head())
+
+# Data Preprocessing
+# Separate features and target variable
+X = iris_data.drop(columns=['species'])
+y = iris_data['species']
+
+# Define preprocessing and model pipeline
+preprocessor = StandardScaler()
+
+model = Pipeline(steps=[
+    ('preprocessor', preprocessor),
+    ('classifier', RandomForestClassifier(random_state=42))
+])
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Train the model
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+accuracy = accuracy_score(y_test, y_pred)
+report = classification_report(y_test, y_pred)
+
+print(f'Accuracy: {accuracy:.4f}')
+print('Classification Report:')
+print(report)
